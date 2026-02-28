@@ -11,18 +11,19 @@
     background: #1a1a2e;
     color: #eee;
     font-family: 'Segoe UI', Arial, sans-serif;
-    padding: 30px 20px;
+    padding: 24px 20px;
     min-height: 100vh;
   }
 
   h1   { color: #d4a843; font-size: 22px; margin-bottom: 4px; }
-  .sub { color: #888; font-size: 13px; margin-bottom: 32px; }
+  .sub { color: #888; font-size: 13px; margin-bottom: 20px; }
+
+  /* ── Top-level layout ──────────────────────────────────── */
+  #page { display: flex; gap: 24px; align-items: flex-start; }
+  #board-col { flex: 1; min-width: 0; }
 
   /* ── Scroll + perspective wrapper ─────────────────────── */
-  #neck-wrapper {
-    overflow-x: auto;
-    padding: 20px 0 30px;
-  }
+  #neck-wrapper { overflow-x: auto; padding: 20px 0 24px; }
 
   #neck-perspective {
     display: inline-block;
@@ -38,7 +39,6 @@
     filter: drop-shadow(-16px 10px 28px rgba(0,0,0,0.85));
   }
 
-  /* ── Headstock placeholder (SVG injected by JS) ────────── */
   #headstock { flex-shrink: 0; line-height: 0; }
 
   /* ── Fretboard ─────────────────────────────────────────── */
@@ -53,61 +53,43 @@
     flex-shrink: 0;
   }
 
-  /* ── Header row (fret numbers) ─────────────────────────── */
-  .header-row {
-    display: flex;
-    height: 20px;       /* explicit — must match JS HEADER_H */
-  }
+  .header-row { display: flex; height: 20px; }
+  .col-open { width: 52px; flex-shrink: 0; text-align: center; font-size: 10px; color: #666; }
+  .col-fret { width: 44px; flex-shrink: 0; text-align: center; font-size: 10px; color: #666; }
 
-  .col-open {
-    width: 52px; flex-shrink: 0;
-    text-align: center; font-size: 10px; color: #666;
-  }
-  .col-fret {
-    width: 44px; flex-shrink: 0;
-    text-align: center; font-size: 10px; color: #666;
-  }
-
-  /* ── String rows ───────────────────────────────────────── */
-  .string-row {
-    display: flex;
-    align-items: center;
-    height: 46px;       /* explicit — must match JS ROW_H */
-    position: relative;
-  }
-
-  /* Horizontal string line */
+  .string-row { display: flex; align-items: center; height: 46px; position: relative; }
   .string-row::before {
-    content: '';
-    position: absolute;
-    left: 0; right: 0;
-    top: 50%; transform: translateY(-50%);
-    background: var(--str-color, #b8b8b8);
-    height: var(--str-px, 1px);
-    pointer-events: none;
-    z-index: 1;
+    content: ''; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+    background: var(--str-color, #b8b8b8); height: var(--str-px, 1px);
+    pointer-events: none; z-index: 1;
   }
 
-  /* ── Open-string cell (left of nut) ────────────────────── */
   .open-cell {
-    width: 52px; flex-shrink: 0;
-    height: 46px;
+    width: 52px; flex-shrink: 0; height: 46px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; position: relative; z-index: 3;
-    border-right: 6px solid #e0cfa0;   /* nut */
+    border-right: 6px solid #e0cfa0;
   }
   .open-cell:hover { background: rgba(212,168,67,0.13); }
 
-  /* ── Fretted cell ──────────────────────────────────────── */
   .fret-cell {
-    width: 44px; flex-shrink: 0;
-    height: 46px;
+    width: 44px; flex-shrink: 0; height: 46px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; position: relative; z-index: 3;
     border-right: 3px solid #a0a0a0;
     transition: background 0.1s;
   }
   .fret-cell:hover { background: rgba(212,168,67,0.13); }
+
+  /* ── Quiz active fret (pulsing blue glow) ──────────────── */
+  .quiz-active {
+    animation: fret-glow 0.65s ease-in-out infinite alternate !important;
+    cursor: default !important;
+  }
+  @keyframes fret-glow {
+    from { background: rgba(60,200,255,0.18); box-shadow: inset 0 0 8px rgba(60,200,255,0.5); }
+    to   { background: rgba(60,200,255,0.52); box-shadow: inset 0 0 18px rgba(60,200,255,1), 0 0 10px rgba(60,200,255,0.4); }
+  }
 
   /* ── Note bubble ───────────────────────────────────────── */
   .note-bubble {
@@ -126,46 +108,136 @@
   .note-bubble .natural { font-size: 13px; }
   .note-bubble.shown    { opacity: 1; transform: scale(1); }
 
-  /* ── Marker dot row ────────────────────────────────────── */
-  .marker-row {
-    display: flex;
-    height: 18px;       /* explicit — JS MARKER_H = 18 + 2 margin */
-    margin-top: 2px;
-  }
+  /* ── Marker dots ───────────────────────────────────────── */
+  .marker-row    { display: flex; height: 18px; margin-top: 2px; }
   .marker-spacer { width: 52px; flex-shrink: 0; }
   .marker-cell   { width: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 3px; }
   .dot           { width: 7px; height: 7px; border-radius: 50%; background: #d4a843; opacity: 0.6; }
 
-  /* ── Controls ──────────────────────────────────────────── */
-  .controls { margin-top: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  button { background: #d4a843; color: #1a1210; border: none; padding: 7px 16px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.15s; }
-  button:hover { background: #e8c050; }
-  .tally { color: #888; font-size: 13px; }
+  /* ── Fretboard controls ────────────────────────────────── */
+  .controls { margin-top: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ctl-btn  { background: #d4a843; color: #1a1210; border: none; padding: 7px 16px; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.15s; }
+  .ctl-btn:hover { background: #e8c050; }
+  .tally    { color: #888; font-size: 13px; }
   .tally span { color: #d4a843; font-weight: bold; }
+
+  /* ── Quiz panel ────────────────────────────────────────── */
+  #quiz-panel {
+    width: 210px; flex-shrink: 0;
+    background: #1e2040; border: 1px solid #3a3a60; border-radius: 10px;
+    padding: 16px 14px;
+    position: sticky; top: 20px;
+  }
+
+  .panel-section   { margin-bottom: 14px; }
+  .panel-section:last-child { margin-bottom: 0; }
+  .panel-label     { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 6px; }
+
+  /* Duration buttons */
+  #dur-btns  { display: flex; gap: 5px; }
+  .dur-btn   { flex: 1; padding: 6px 2px; background: #252545; color: #bbb; border: 1px solid #4a4a6a; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; transition: background 0.1s; }
+  .dur-btn:hover   { background: #353560; }
+  .dur-btn.active  { background: #d4a843; color: #1a1210; border-color: #d4a843; }
+
+  /* Timer */
+  #timer {
+    font-size: 48px; font-weight: bold; color: #d4a843;
+    text-align: center; font-variant-numeric: tabular-nums;
+    letter-spacing: 3px; line-height: 1; margin: 4px 0 10px;
+  }
+  #timer.warning { color: #e87820; }
+  #timer.danger  { color: #e83030; animation: timer-pulse 0.5s ease-in-out infinite alternate; }
+  @keyframes timer-pulse { from { opacity: 1; } to { opacity: 0.35; } }
+
+  /* Start/Stop */
+  #btn-start {
+    width: 100%; padding: 9px; font-size: 14px; font-weight: bold;
+    border-radius: 6px; border: none; cursor: pointer;
+    background: #d4a843; color: #1a1210; transition: background 0.15s;
+  }
+  #btn-start:hover      { background: #e8c050; }
+  #btn-start.is-running { background: #b03030; color: #fff; }
+  #btn-start.is-running:hover { background: #d04040; }
+
+  /* Score */
+  #quiz-score { font-size: 44px; font-weight: bold; color: #d4a843; text-align: center; line-height: 1; }
+
+  /* Note buttons */
+  #note-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .note-btn  {
+    padding: 8px 2px; background: #252545; color: #ccc;
+    border: 1px solid #4a4a6a; border-radius: 5px;
+    cursor: pointer; font-size: 11px; font-weight: bold;
+    text-align: center; line-height: 1.25;
+    transition: background 0.1s, border-color 0.1s;
+  }
+  .note-btn:hover:not(:disabled) { background: #353560; border-color: #6a6aaa; }
+  .note-btn:disabled { opacity: 0.3; cursor: default; }
+  .note-btn.correct  { background: #1a5a1a !important; border-color: #40aa40 !important; color: #80ff80 !important; }
+  .note-btn.wrong    { background: #5a1a1a !important; border-color: #aa4040 !important; color: #ff8080 !important; }
+
+  /* End message */
+  #quiz-msg { text-align: center; font-size: 12px; color: #aaa; min-height: 16px; margin-top: 8px; line-height: 1.4; }
 </style>
 </head>
 <body>
 
 <h1>Guitar Fretboard Quiz</h1>
-<p class="sub">Click any position to reveal its note. Click again to hide.</p>
+<p class="sub">Click any fret to reveal its note — or use the timed quiz on the right.</p>
 
-<div id="neck-wrapper">
-  <div id="neck-perspective">
-    <div id="neck-body">
-      <div id="headstock"></div>
-      <div id="fretboard"></div>
+<div id="page">
+
+  <!-- ── Fretboard column ─────────────────────────────────── -->
+  <div id="board-col">
+    <div id="neck-wrapper">
+      <div id="neck-perspective">
+        <div id="neck-body">
+          <div id="headstock"></div>
+          <div id="fretboard"></div>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="ctl-btn" id="btn-reset">Reset All</button>
+      <button class="ctl-btn" id="btn-showall">Show All</button>
+      <div class="tally">Revealed: <span id="tally-count">0</span> / <span id="tally-total">0</span></div>
     </div>
   </div>
-</div>
 
-<div class="controls">
-  <button id="btn-reset">Reset All</button>
-  <button id="btn-showall">Show All</button>
-  <div class="tally">Revealed: <span id="tally-count">0</span> / <span id="tally-total">0</span></div>
-</div>
+  <!-- ── Quiz panel ───────────────────────────────────────── -->
+  <div id="quiz-panel">
+
+    <div class="panel-section">
+      <div class="panel-label">Duration</div>
+      <div id="dur-btns">
+        <button class="dur-btn active" data-secs="60">1 min</button>
+        <button class="dur-btn"        data-secs="120">2 min</button>
+        <button class="dur-btn"        data-secs="180">3 min</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div id="timer">1:00</div>
+      <button id="btn-start">Start Quiz</button>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Score</div>
+      <div id="quiz-score">0</div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-label">Select Note</div>
+      <div id="note-grid"></div>
+    </div>
+
+    <div id="quiz-msg"></div>
+  </div>
+
+</div><!-- #page -->
 
 <script>
-  // ── Chromatic scale (C = 0) ─────────────────────────────
+  // ── Data ─────────────────────────────────────────────────
   const CHROMATIC = [
     { sharp: 'C',  flat: 'C'  },
     { sharp: 'C#', flat: 'D♭' },
@@ -181,57 +253,150 @@
     { sharp: 'B',  flat: 'B'  },
   ];
 
-  // High e → low E  (top → bottom = standard tab layout)
+  // High e → low E (top → bottom, standard tab layout)
   const STRINGS = [
-    { label: 'e', openIdx: 4,  px: 0.7, color: '#d4d4d4', openHz: 329.63 },  // plain
-    { label: 'B', openIdx: 11, px: 1.1, color: '#c8c8c8', openHz: 246.94 },  // plain
-    { label: 'G', openIdx: 7,  px: 1.4, color: '#bcbcbc', openHz: 196.00 },  // plain
-    { label: 'D', openIdx: 2,  px: 2.0, color: '#c9a94e', openHz: 146.83 },  // wound
-    { label: 'A', openIdx: 9,  px: 2.5, color: '#c09840', openHz: 110.00 },  // wound
-    { label: 'E', openIdx: 4,  px: 3.2, color: '#b08830', openHz:  82.41 },  // wound
+    { label: 'e', openIdx: 4,  px: 0.7, color: '#d4d4d4', openHz: 329.63 },
+    { label: 'B', openIdx: 11, px: 1.1, color: '#c8c8c8', openHz: 246.94 },
+    { label: 'G', openIdx: 7,  px: 1.4, color: '#bcbcbc', openHz: 196.00 },
+    { label: 'D', openIdx: 2,  px: 2.0, color: '#c9a94e', openHz: 146.83 },
+    { label: 'A', openIdx: 9,  px: 2.5, color: '#c09840', openHz: 110.00 },
+    { label: 'E', openIdx: 4,  px: 3.2, color: '#b08830', openHz:  82.41 },
   ];
 
   const NUM_FRETS   = 24;
   const SINGLE_DOTS = new Set([3, 5, 7, 9, 15, 17, 19, 21]);
   const DOUBLE_DOTS = new Set([12, 24]);
 
-  // Layout constants — must match CSS values exactly
-  const BORDER   = 8;   // #fretboard border-top / border-bottom
-  const PADDING  = 6;   // #fretboard padding-top / padding-bottom
-  const HEADER_H = 20;  // .header-row height
-  const ROW_H    = 46;  // .string-row height
-  const MARKER_H = 20;  // .marker-row height + margin-top
+  // Layout geometry — values must match CSS
+  const BORDER   = 8;
+  const PADDING  = 6;
+  const HEADER_H = 20;
+  const ROW_H    = 46;
+  const MARKER_H = 20;
+  const SVG_H    = BORDER + PADDING + HEADER_H + STRINGS.length * ROW_H + MARKER_H + PADDING + BORDER;
+  const pegY     = i => BORDER + PADDING + HEADER_H + i * ROW_H + ROW_H / 2;
 
-  // Total SVG height that matches the rendered fretboard height
-  const SVG_H = BORDER + PADDING + HEADER_H + STRINGS.length * ROW_H + MARKER_H + PADDING + BORDER;
-  // = 8 + 6 + 20 + 276 + 20 + 6 + 8 = 344 px
+  // Cell lookup grid [stringIdx][fret 0..24]
+  const cells = [];
 
-  // Y-centre of string row i within the SVG coordinate space
-  const pegY = i => BORDER + PADDING + HEADER_H + i * ROW_H + ROW_H / 2;
+  // ── Quiz state ───────────────────────────────────────────
+  let quizState    = 'idle';   // 'idle' | 'running' | 'finished'
+  let quizScore    = 0;
+  let quizDuration = 60;
+  let quizTimeLeft = 60;
+  let quizTimerId  = null;
+  let activeCell   = null;
+  let activeAnswer = null;   // { sharp, flat }
+  let isAnswering  = false;  // debounce rapid clicks
 
-  // ── Helpers ─────────────────────────────────────────────
-  function el(tag, cls)       { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
-  function elText(tag, cls, t){ const e = el(tag, cls); e.textContent = t; return e; }
-  function svgEl(tag, attrs)  {
-    const NS = 'http://www.w3.org/2000/svg';
-    const e  = document.createElementNS(NS, tag);
+  function startQuiz() {
+    quizScore    = 0;
+    quizTimeLeft = quizDuration;
+    quizState    = 'running';
+    isAnswering  = false;
+
+    document.getElementById('quiz-score').textContent = '0';
+    document.getElementById('quiz-msg').textContent   = '';
+    document.getElementById('btn-start').textContent  = 'Stop';
+    document.getElementById('btn-start').classList.add('is-running');
+    setNoteButtonsEnabled(true);
+    updateTimerDisplay();
+    showNextFret();
+
+    quizTimerId = setInterval(() => {
+      quizTimeLeft--;
+      updateTimerDisplay();
+      if (quizTimeLeft <= 0) endQuiz();
+    }, 1000);
+  }
+
+  function endQuiz() {
+    clearInterval(quizTimerId);
+    quizTimerId = null;
+    quizState   = 'finished';
+    clearActiveCell();
+    setNoteButtonsEnabled(false);
+    document.getElementById('btn-start').textContent = 'Start Quiz';
+    document.getElementById('btn-start').classList.remove('is-running');
+    document.getElementById('quiz-msg').textContent  =
+      `Time's up!  Final score: ${quizScore} 🎸`;
+  }
+
+  function showNextFret() {
+    clearActiveCell();
+    if (quizState !== 'running') return;
+    const si   = Math.floor(Math.random() * STRINGS.length);
+    const fret = Math.floor(Math.random() * (NUM_FRETS + 1));
+    activeCell   = cells[si][fret];
+    activeAnswer = getNote(si, fret);
+    activeCell.classList.add('quiz-active');
+    playNote(STRINGS[si].openHz * Math.pow(2, fret / 12));
+  }
+
+  function clearActiveCell() {
+    if (activeCell) { activeCell.classList.remove('quiz-active'); activeCell = null; activeAnswer = null; }
+  }
+
+  function handleNoteGuess(sharp) {
+    if (quizState !== 'running' || !activeAnswer || isAnswering) return;
+    isAnswering = true;
+
+    const pressed    = document.querySelector(`.note-btn[data-sharp="${CSS.escape(sharp)}"]`);
+    const correctBtn = document.querySelector(`.note-btn[data-sharp="${CSS.escape(activeAnswer.sharp)}"]`);
+
+    if (sharp === activeAnswer.sharp) {
+      quizScore++;
+      document.getElementById('quiz-score').textContent = quizScore;
+      pressed.classList.add('correct');
+      setTimeout(() => {
+        pressed.classList.remove('correct');
+        isAnswering = false;
+        showNextFret();
+      }, 450);
+    } else {
+      pressed.classList.add('wrong');
+      setTimeout(() => {
+        pressed.classList.remove('wrong');
+        correctBtn.classList.add('correct');      // briefly show right answer
+        setTimeout(() => {
+          correctBtn.classList.remove('correct');
+          isAnswering = false;
+          showNextFret();
+        }, 550);
+      }, 400);
+    }
+  }
+
+  function updateTimerDisplay() {
+    const mins = Math.floor(quizTimeLeft / 60);
+    const secs = quizTimeLeft % 60;
+    const el   = document.getElementById('timer');
+    el.textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+    el.classList.toggle('warning', quizTimeLeft <= 30 && quizTimeLeft > 10);
+    el.classList.toggle('danger',  quizTimeLeft <= 10);
+  }
+
+  function setNoteButtonsEnabled(on) {
+    document.querySelectorAll('.note-btn').forEach(b => { b.disabled = !on; });
+  }
+
+  // ── Helpers ──────────────────────────────────────────────
+  function el(tag, cls)        { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
+  function elText(tag, cls, t) { const e = el(tag, cls); e.textContent = t; return e; }
+  function svgEl(tag, attrs)   {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
     for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
     return e;
   }
 
-  // ── Note helpers ─────────────────────────────────────────
-  function getNote(si, fret) {
-    return CHROMATIC[(STRINGS[si].openIdx + fret) % 12];
-  }
+  function getNote(si, fret) { return CHROMATIC[(STRINGS[si].openIdx + fret) % 12]; }
 
   function makeBubble(si, fret) {
     const { sharp, flat } = getNote(si, fret);
     const b = el('div', 'note-bubble');
-    if (sharp === flat) {
-      b.innerHTML = `<span class="natural">${sharp}</span>`;
-    } else {
-      b.innerHTML = `<span class="sharp">${sharp}</span><span class="flat">${flat}</span>`;
-    }
+    b.innerHTML = (sharp === flat)
+      ? `<span class="natural">${sharp}</span>`
+      : `<span class="sharp">${sharp}</span><span class="flat">${flat}</span>`;
     return b;
   }
 
@@ -239,8 +404,15 @@
     const cell   = el('div', isOpen ? 'open-cell' : 'fret-cell');
     const bubble = makeBubble(si, fret);
     cell.appendChild(bubble);
+    if (!cells[si]) cells[si] = [];
+    cells[si][fret] = cell;
     const freq = STRINGS[si].openHz * Math.pow(2, fret / 12);
-    cell.addEventListener('click', () => { bubble.classList.toggle('shown'); updateTally(); playNote(freq); });
+    cell.addEventListener('click', () => {
+      if (quizState === 'running') return;
+      bubble.classList.toggle('shown');
+      updateTally();
+      playNote(freq);
+    });
     return cell;
   }
 
@@ -249,36 +421,131 @@
       document.querySelectorAll('.note-bubble.shown').length;
   }
 
-  // ── Audio (Karplus-Strong plucked string) ────────────────
-  // Pre-compute the full output as an AudioBuffer in plain JS — no AudioWorklet
-  // needed, works from file:// in any browser.
-  // Algorithm: fill a short circular buffer (length = sampleRate/freq) with
-  // white noise, then for each output sample write the current slot and replace
-  // it with the average of itself and the next slot × a decay factor < 0.5.
-  // The averaging acts as a lowpass; the buffer length sets the resonant pitch.
+  // ── Build note buttons ───────────────────────────────────
+  function buildNoteButtons() {
+    const grid = document.getElementById('note-grid');
+    CHROMATIC.forEach(({ sharp, flat }) => {
+      const btn = el('button', 'note-btn');
+      btn.dataset.sharp = sharp;
+      btn.disabled      = true;
+      btn.innerHTML = (sharp === flat)
+        ? sharp
+        : `${sharp}<br><span style="font-size:9px;font-weight:normal;color:#888">${flat}</span>`;
+      btn.addEventListener('click', () => handleNoteGuess(sharp));
+      grid.appendChild(btn);
+    });
+  }
 
+  // ── Build headstock SVG ──────────────────────────────────
+  function buildHeadstock() {
+    const W = 100, H = SVG_H;
+    const svg = svgEl('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}` });
+
+    const add = (tag, attrs, text) => {
+      const e = svgEl(tag, attrs);
+      if (text !== undefined) e.textContent = text;
+      svg.appendChild(e); return e;
+    };
+
+    add('rect', { x:0, y:0, width:W, height:H, fill:'#311800' });
+    add('path', {
+      d: `M ${W} ${BORDER} L 16 ${BORDER} Q 2 ${BORDER} 2 ${BORDER+14}
+          L 2 ${H-BORDER-14} Q 2 ${H-BORDER} 16 ${H-BORDER} L ${W} ${H-BORDER} Z`,
+      fill:'#3a1d00', stroke:'#7a6040', 'stroke-width':1
+    });
+    add('rect', { x:0, y:0,        width:W, height:BORDER, fill:'#7a6040' });
+    add('rect', { x:0, y:H-BORDER, width:W, height:BORDER, fill:'#7a6040' });
+
+    STRINGS.forEach((str, i) => {
+      const cy = pegY(i);
+      add('line',   { x1:W, y1:cy, x2:52, y2:cy, stroke:str.color, 'stroke-width':str.px });
+      add('rect',   { x:42, y:cy-8, width:22, height:16, rx:3, fill:'#8a8a8a', stroke:'#555', 'stroke-width':1 });
+      add('circle', { cx:53, cy, r:3.5, fill:'#444' });
+      add('circle', { cx:15, cy, r:11,  fill:'#c2c2c2', stroke:'#888', 'stroke-width':1.5 });
+      add('text',   { x:15, y:cy+4, 'text-anchor':'middle', 'font-size':9, 'font-weight':'bold',
+                      'font-family':'Arial,sans-serif', fill:'#1a1210' }, str.label);
+    });
+
+    document.getElementById('headstock').appendChild(svg);
+  }
+
+  // ── Build fretboard grid ─────────────────────────────────
+  function buildFretboard() {
+    const fb = document.getElementById('fretboard');
+    document.getElementById('tally-total').textContent = STRINGS.length * (NUM_FRETS + 1);
+
+    const hdr = el('div', 'header-row');
+    hdr.appendChild(elText('div', 'col-open', 'Open'));
+    for (let f = 1; f <= NUM_FRETS; f++) hdr.appendChild(elText('div', 'col-fret', f));
+    fb.appendChild(hdr);
+
+    STRINGS.forEach((str, si) => {
+      const row = el('div', 'string-row');
+      row.style.setProperty('--str-px',    str.px + 'px');
+      row.style.setProperty('--str-color', str.color);
+      row.appendChild(makeCell(si, 0, true));
+      for (let f = 1; f <= NUM_FRETS; f++) row.appendChild(makeCell(si, f, false));
+      fb.appendChild(row);
+    });
+
+    const dotRow = el('div', 'marker-row');
+    dotRow.appendChild(el('div', 'marker-spacer'));
+    for (let f = 1; f <= NUM_FRETS; f++) {
+      const mc = el('div', 'marker-cell');
+      if      (SINGLE_DOTS.has(f)) mc.appendChild(el('div', 'dot'));
+      else if (DOUBLE_DOTS.has(f)) { mc.appendChild(el('div', 'dot')); mc.appendChild(el('div', 'dot')); }
+      dotRow.appendChild(mc);
+    }
+    fb.appendChild(dotRow);
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      document.querySelectorAll('.note-bubble.shown').forEach(b => b.classList.remove('shown'));
+      updateTally();
+    });
+    document.getElementById('btn-showall').addEventListener('click', () => {
+      document.querySelectorAll('.note-bubble:not(.shown)').forEach(b => b.classList.add('shown'));
+      updateTally();
+    });
+  }
+
+  // ── Wire quiz controls ───────────────────────────────────
+  function initQuizControls() {
+    document.querySelectorAll('.dur-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (quizState === 'running') return;
+        document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        quizDuration = parseInt(btn.dataset.secs);
+        quizTimeLeft = quizDuration;
+        updateTimerDisplay();
+      });
+    });
+
+    document.getElementById('btn-start').addEventListener('click', () => {
+      if (quizState === 'running') endQuiz();
+      else { quizTimeLeft = quizDuration; startQuiz(); }
+    });
+  }
+
+  // ── Audio (Karplus-Strong pre-computed buffer) ───────────
   let audioCtx = null;
 
   function generatePluck(ctx, freq, duration = 3) {
-    const sr          = ctx.sampleRate;
-    const totalSamps  = Math.round(sr * duration);
-    const lineLen     = Math.max(2, Math.round(sr / freq));
-
-    // Seed delay line with noise
-    const line = new Float32Array(lineLen);
+    const sr         = ctx.sampleRate;
+    const totalSamps = Math.round(sr * duration);
+    const lineLen    = Math.max(2, Math.round(sr / freq));
+    const line       = new Float32Array(lineLen);
     for (let i = 0; i < lineLen; i++) line[i] = Math.random() * 2 - 1;
-
-    // Karplus-Strong iteration into an AudioBuffer
-    const audioBuffer = ctx.createBuffer(1, totalSamps, sr);
-    const data        = audioBuffer.getChannelData(0);
+    const ab   = ctx.createBuffer(1, totalSamps, sr);
+    const data = ab.getChannelData(0);
     let pos = 0;
     for (let i = 0; i < totalSamps; i++) {
-      const next  = (pos + 1) % lineLen;
-      data[i]     = line[pos];
-      line[pos]   = (line[pos] + line[next]) * 0.498; // 0.498 → ~2-3 s decay
-      pos         = next;
+      const next = (pos + 1) % lineLen;
+      data[i]   = line[pos];
+      line[pos] = (line[pos] + line[next]) * 0.498;
+      pos       = next;
     }
-    return audioBuffer;
+    return ab;
   }
 
   function playNote(freq) {
@@ -294,119 +561,14 @@
         src.start();
       };
       audioCtx.state === 'suspended' ? audioCtx.resume().then(play) : play();
-    } catch (err) {
-      console.warn('Audio unavailable:', err);
-    }
+    } catch (e) { console.warn('Audio unavailable:', e); }
   }
 
-  // ── Build headstock SVG ──────────────────────────────────
-  function buildHeadstock() {
-    const W = 100, H = SVG_H;
-    const svg = svgEl('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}` });
-
-    const add = (tag, attrs, text) => {
-      const e = svgEl(tag, attrs);
-      if (text !== undefined) e.textContent = text;
-      svg.appendChild(e);
-      return e;
-    };
-
-    // Wood fill
-    add('rect', { x:0, y:0, width:W, height:H, fill:'#311800' });
-
-    // Headstock body — rounded on the left only
-    add('path', {
-      d: `M ${W} ${BORDER}
-          L 16 ${BORDER}
-          Q 2 ${BORDER} 2 ${BORDER + 14}
-          L 2 ${H - BORDER - 14}
-          Q 2 ${H - BORDER} 16 ${H - BORDER}
-          L ${W} ${H - BORDER} Z`,
-      fill: '#3a1d00',
-      stroke: '#7a6040',
-      'stroke-width': 1
-    });
-
-    // Top & bottom binding bars (match fretboard border colour)
-    add('rect', { x:0, y:0,        width:W, height:BORDER, fill:'#7a6040' });
-    add('rect', { x:0, y:H-BORDER, width:W, height:BORDER, fill:'#7a6040' });
-
-    // Per-string: string line + tuning machine assembly
-    STRINGS.forEach((str, i) => {
-      const cy = pegY(i);
-
-      // String line from right edge to barrel
-      add('line', { x1: W, y1: cy, x2: 52, y2: cy,
-                    stroke: str.color, 'stroke-width': str.px });
-
-      // Barrel (metal housing)
-      add('rect', { x: 42, y: cy - 8, width: 22, height: 16, rx: 3,
-                    fill: '#8a8a8a', stroke: '#555', 'stroke-width': 1 });
-
-      // String post hole in barrel
-      add('circle', { cx: 53, cy, r: 3.5, fill: '#444' });
-
-      // Tuning knob
-      add('circle', { cx: 15, cy, r: 11,
-                      fill: '#c2c2c2', stroke: '#888', 'stroke-width': 1.5 });
-
-      // String name on knob
-      add('text', { x: 15, y: cy + 4,
-                    'text-anchor': 'middle',
-                    'font-size': 9,
-                    'font-weight': 'bold',
-                    'font-family': 'Arial, sans-serif',
-                    fill: '#1a1210' }, str.label);
-    });
-
-    document.getElementById('headstock').appendChild(svg);
-  }
-
-  // ── Build fretboard grid ─────────────────────────────────
-  function buildFretboard() {
-    const fb = document.getElementById('fretboard');
-    document.getElementById('tally-total').textContent = STRINGS.length * (NUM_FRETS + 1);
-
-    // Fret number header
-    const hdr = el('div', 'header-row');
-    hdr.appendChild(elText('div', 'col-open', 'Open'));
-    for (let f = 1; f <= NUM_FRETS; f++) hdr.appendChild(elText('div', 'col-fret', f));
-    fb.appendChild(hdr);
-
-    // One row per string
-    STRINGS.forEach((str, si) => {
-      const row = el('div', 'string-row');
-      row.style.setProperty('--str-px',    str.px + 'px');
-      row.style.setProperty('--str-color', str.color);
-      row.appendChild(makeCell(si, 0, true));                      // open
-      for (let f = 1; f <= NUM_FRETS; f++) row.appendChild(makeCell(si, f, false));
-      fb.appendChild(row);
-    });
-
-    // Fret position marker dots
-    const dotRow = el('div', 'marker-row');
-    dotRow.appendChild(el('div', 'marker-spacer'));
-    for (let f = 1; f <= NUM_FRETS; f++) {
-      const mc = el('div', 'marker-cell');
-      if      (SINGLE_DOTS.has(f)) mc.appendChild(el('div', 'dot'));
-      else if (DOUBLE_DOTS.has(f)) { mc.appendChild(el('div', 'dot')); mc.appendChild(el('div', 'dot')); }
-      dotRow.appendChild(mc);
-    }
-    fb.appendChild(dotRow);
-
-    // Button handlers
-    document.getElementById('btn-reset').addEventListener('click', () => {
-      document.querySelectorAll('.note-bubble.shown').forEach(b => b.classList.remove('shown'));
-      updateTally();
-    });
-    document.getElementById('btn-showall').addEventListener('click', () => {
-      document.querySelectorAll('.note-bubble:not(.shown)').forEach(b => b.classList.add('shown'));
-      updateTally();
-    });
-  }
-
+  // ── Init ─────────────────────────────────────────────────
   buildFretboard();
   buildHeadstock();
+  buildNoteButtons();
+  initQuizControls();
 </script>
 </body>
 </html>
