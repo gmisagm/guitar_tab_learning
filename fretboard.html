@@ -250,66 +250,50 @@
   }
 
   // ── Audio (Karplus-Strong plucked string) ────────────────
-  // The algorithm: seed a circular buffer with noise, then on each sample
-  // output the current value and replace it with the average of adjacent
-  // samples × a decay factor. The buffer length = sampleRate / frequency,
-  // so the feedback resonates at exactly the right pitch.
-  const WORKLET_CODE = `
-class PluckProcessor extends AudioWorkletProcessor {
-  constructor() {
-    super();
-    this.buf = null;
-    this.pos = 0;
-    this.port.onmessage = ({ data }) => {
-      const len = Math.round(sampleRate / data.freq);
-      this.buf = new Float32Array(len);
-      for (let i = 0; i < len; i++) this.buf[i] = Math.random() * 2 - 1;
-      this.pos = 0;
-    };
-  }
-  process(_, outputs) {
-    const ch = outputs[0][0];
-    if (!this.buf) return true;
-    const buf = this.buf, len = buf.length;
-    for (let i = 0; i < ch.length; i++) {
-      ch[i] = buf[this.pos];
-      const next = (this.pos + 1) % len;
-      buf[this.pos] = (buf[this.pos] + buf[next]) * 0.498; // 0.498 ≈ 2-3 s decay
-      this.pos = next;
+  // Pre-compute the full output as an AudioBuffer in plain JS — no AudioWorklet
+  // needed, works from file:// in any browser.
+  // Algorithm: fill a short circular buffer (length = sampleRate/freq) with
+  // white noise, then for each output sample write the current slot and replace
+  // it with the average of itself and the next slot × a decay factor < 0.5.
+  // The averaging acts as a lowpass; the buffer length sets the resonant pitch.
+
+  let audioCtx = null;
+
+  function generatePluck(ctx, freq, duration = 3) {
+    const sr          = ctx.sampleRate;
+    const totalSamps  = Math.round(sr * duration);
+    const lineLen     = Math.max(2, Math.round(sr / freq));
+
+    // Seed delay line with noise
+    const line = new Float32Array(lineLen);
+    for (let i = 0; i < lineLen; i++) line[i] = Math.random() * 2 - 1;
+
+    // Karplus-Strong iteration into an AudioBuffer
+    const audioBuffer = ctx.createBuffer(1, totalSamps, sr);
+    const data        = audioBuffer.getChannelData(0);
+    let pos = 0;
+    for (let i = 0; i < totalSamps; i++) {
+      const next  = (pos + 1) % lineLen;
+      data[i]     = line[pos];
+      line[pos]   = (line[pos] + line[next]) * 0.498; // 0.498 → ~2-3 s decay
+      pos         = next;
     }
-    return true;
-  }
-}
-registerProcessor('pluck', PluckProcessor);
-`;
-
-  let audioCtx    = null;
-  let workletReady = null; // cached Promise
-
-  async function initAudio() {
-    if (!audioCtx) audioCtx = new AudioContext();
-    if (!workletReady) {
-      const blob = new Blob([WORKLET_CODE], { type: 'application/javascript' });
-      const url  = URL.createObjectURL(blob);
-      workletReady = audioCtx.audioWorklet.addModule(url)
-                              .then(() => URL.revokeObjectURL(url));
-    }
-    await workletReady;
-    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    return audioBuffer;
   }
 
-  async function playNote(freq) {
+  function playNote(freq) {
     try {
-      await initAudio();
-      const node = new AudioWorkletNode(audioCtx, 'pluck');
-      const gain = audioCtx.createGain();
-      gain.gain.setValueAtTime(0.7, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 4);
-      node.connect(gain);
-      gain.connect(audioCtx.destination);
-      node.port.postMessage({ freq });
-      // Disconnect after note has fully decayed
-      setTimeout(() => { try { node.disconnect(); gain.disconnect(); } catch {} }, 4500);
+      if (!audioCtx) audioCtx = new AudioContext();
+      const play = () => {
+        const src  = audioCtx.createBufferSource();
+        src.buffer = generatePluck(audioCtx, freq);
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+        src.connect(gain);
+        gain.connect(audioCtx.destination);
+        src.start();
+      };
+      audioCtx.state === 'suspended' ? audioCtx.resume().then(play) : play();
     } catch (err) {
       console.warn('Audio unavailable:', err);
     }
